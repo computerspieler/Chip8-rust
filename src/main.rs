@@ -82,6 +82,15 @@ impl CPUState
         return self.stack[self.sp as usize];
     }
 
+	fn decrease_timers(&mut self) {
+		if self.sound_timer > 0 {
+			self.sound_timer -= 1;
+		}
+		if self.delay_timer > 0 {
+			self.delay_timer -= 1;
+		}
+	}
+
 	fn interpret(&mut self, inst_lo: u8, inst_hi: u8, increment_pc: &mut bool, keys: [bool; 16])
 	{
 		let inst : u16 =
@@ -377,11 +386,20 @@ fn main()
         .title("Chip 8 Emulator")
         .build();
 
+	rl.set_target_fps(60);
 	while !rl.window_should_close() {
-        let mut d = rl.begin_drawing(&thread);
+		for _ in 0 .. 5 {
+			state.cycle([false; 16]);
+		}
+
+		if state.sound_timer > 0 {
+			/* TODO: Play sound */
+			println!("BEEP !");
+		}
+		state.decrease_timers();
 		
-		state.cycle([false; 16]);
-        d.clear_background(Color::BLACK);
+		let mut d = rl.begin_drawing(&thread);
+		d.clear_background(Color::BLACK);
 		for x in 0 .. SCREEN_WIDTH {
 			for y in 0 .. SCREEN_HEIGHT {
 				if state.screen[y * SCREEN_WIDTH + x] {
@@ -391,5 +409,5 @@ fn main()
 				}
 			}
 		}
-    }
+	}
 }
